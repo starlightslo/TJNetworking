@@ -1,5 +1,6 @@
 package com.tonyhuang.network.tcp;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -63,9 +64,14 @@ public class TCPConnection implements Runnable {
 		
 		while (!Thread.interrupted() && isConnected && mSocket != null && mSocket.isConnected()) {
 			try {
-				int len = in.read(buffer);
-				if (len > -1) {
-					mTCPClientListener.recv(this, buffer, len);
+				int read = -1, len = -1;
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				while (isRun && (read = in.read()) != -1) {
+					baos.write(read);
+					len = 1;
+				}
+				if (len == 1) {
+					mTCPClientListener.recv(this, baos.toByteArray(), baos.size());
 				} else if (len == -1) {
 					mTCPClientListener.onClose(this);
 				}

@@ -22,6 +22,9 @@ public class AIOServerSocket implements AIOListener {
 	}
 
 	private int mPort = -1;
+	
+	private int mSendBufferSize = 16 * 1024;
+	private int mRecvBufferSize = 16 * 1024;
 
 	private AsynchronousServerSocketChannel mServerSocket = null;
 	private AIOListener mAIOListener;
@@ -40,6 +43,8 @@ public class AIOServerSocket implements AIOListener {
 			try {
 				AIOSocket socket = new AIOSocket(channel, AIOServerSocket.this);
 				if (!mClients.contains(socket)) {
+					socket.setSendBufferSize(mSendBufferSize);
+					socket.setReceiverBufferSize(mRecvBufferSize);
 					mClients.add(socket);
 					mAIOListener.onConnected(socket);
 				}
@@ -112,15 +117,17 @@ public class AIOServerSocket implements AIOListener {
 	}
 
 	public void setSendBufferSize(int size) throws IOException {
+		mSendBufferSize = size;
 		for (int i = 0 ; i < mClients.size() ; i++) {
-			mClients.get(i).setSendBufferSize(size);
+			mClients.get(i).setSendBufferSize(mSendBufferSize);
 		}
 	}
 
 	public void setReceiverBufferSize(int size) throws IOException {
-		mServerSocket.setOption(StandardSocketOptions.SO_RCVBUF, size);
+		mRecvBufferSize = size;
+		mServerSocket.setOption(StandardSocketOptions.SO_RCVBUF, mRecvBufferSize);
 		for (int i = 0 ; i < mClients.size() ; i++) {
-			mClients.get(i).setReceiverBufferSize(size);
+			mClients.get(i).setReceiverBufferSize(mRecvBufferSize);
 		}
 	}
 
